@@ -1,0 +1,24 @@
+- hosts: localhost
+  connection: local
+  tasks:
+   - name: ec2 instance 
+     ec2:
+        key_name: my-web-key
+        instance_type: t2.micro
+        image: ami-08c40ec9ead489470
+        region: us-east-1
+        vpc_subnet_id: subnet-0bf7fad62dce5ba0c  
+        groups: my-ashok-sg  
+        wait: true
+        exact_count: 1
+        count_tag:
+          env: test
+        instance_tags:
+           Name: Test-ansible
+           env: test  
+        assign_public_ip: true  
+     register: ashok_ec2_info
+   - debug:
+      msg: "{{ashok_ec2_info}}"
+   - debug:
+      msg: "Login with : {{ashok_ec2_info.tagged_instances[0].public_dns_name}}"     
