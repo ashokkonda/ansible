@@ -1,0 +1,134 @@
+- hosts: localhost
+  connection: local
+  vars_files: 
+   - /root/my-ansible/vars/ansible_vars  
+  tasks:
+   - name: key for instance
+     ec2_key:
+            name: ashok_key1
+            region: "{{region}}"
+     register: ashok_ec2_info
+       #   #- debug:
+       #     #msg: "{{ashok_ec2_info}}"
+   - name: copy pem key
+     copy:
+      content: "{{ashok_ec2_info.key.private_key}}"
+      dest: "./ashok_key1.pem"
+      mode: 0600   
+     when: ashok_ec2_info.changed 
+   - name: security grop
+     ec2_group:
+       description: allow all
+       name: angible_sg1
+       vpc_id: vpc-03eafa4ed12750fc5  
+       region: "{{region}}"
+       rules:
+         - proto: tcp
+           from_port: 80
+           to_port: 80
+           cidr_ip: 0.0.0.0/0
+         - proto: tcp
+           from_port: 8080
+           to_port: 8080
+           cidr_ip: "{{office_ip}}"
+         - proto: tcp
+           from_port: 22
+           to_port: 22
+           cidr_ip: 0.0.0.0/0
+         - proto: tcp
+           from_port: 443
+           to_port: 443
+           cidr_ip: 0.0.0.0/0  
+        # this should only be needed for EC2 Classic security group rules
+        # because in a VPC an ELB will use a user-account security group
+        #group_id: amazon-elb/sg-87654321/amazon-elb-sg
+         - proto: tcp
+           from_port: 3306
+           to_port: 3306    
+           cidr_ip: "{{office_ip}}"
+     register: security_group
+   - name: security grop
+     ec2_group:
+       description: allow all
+       name: angible_sg1
+       vpc_id: vpc-03eafa4ed12750fc5  
+       region: "{{region}}"
+       rules:
+         - proto: tcp
+           from_port: 80
+           to_port: 80
+           cidr_ip: 0.0.0.0/0
+         - proto: tcp
+           from_port: 8080
+           to_port: 8080
+           cidr_ip: "{{office_ip}}"
+         - proto: tcp
+           from_port: 22
+           to_port: 22
+           cidr_ip: 0.0.0.0/0
+         - proto: tcp
+           from_port: 443
+           to_port: 443
+           cidr_ip: 0.0.0.0/0
+        # this should only be needed for EC2 Classic security group rules
+        # because in a VPC an ELB will use a user-account security group
+        #group_id: amazon-elb/sg-87654321/amazon-elb-sg
+         - proto: tcp
+           from_port: 3306
+           to_port: 3306
+           cidr_ip: "{{office_ip}}"
+         - proto: all
+           group_id: "{{security_group.group_id}}"
+   - name: ec2 instance for nginx tomcat and other servers
+     ec2:
+        key_name: ashok_key1
+        instance_type: t2.micro
+        image: ami-08c40ec9ead489470
+        region: us-east-1
+        vpc_subnet_id: "{{item.subnet}}"
+        groups: "{{security_group.group_name}}"
+        wait: true
+        wait_timeout: 300  
+        exact_count: 1
+        count_tag:
+          Name: "{{item.name}}"
+            #env: test
+        instance_tags:
+           Name: "{{item.name}}"
+           env: test
+        assign_public_ip: true
+     loop: 
+       - name: nginx01
+         subnet: "{{sub1}}"
+       - name: nginx02    
+         subnet: "{{sub2}}"
+       - name: Tomcat01
+         subnet: "{{sub1}}"
+       - name: Tomcat02
+         subnet: "{{sub2}}"
+       - name: RMQ1
+         subnet: "{{sub1}}"   
+       - name: Memcache1
+         subnet: "{{sub1}}"    
+       - name: DB1
+         subnet: "{{sub1}}"  
+     register: Nginx1_info
+   - debug:
+      msg: "{{Nginx1_info.results}}"
+   - debug:
+      msg: "{{item.name}} Public ip is {{item.ip}}"
+     loop:
+       - name: nginx01
+         ip: "{{Nginx1_info.results[0].tagged_instances[0].public_dns_name}}"
+       - name: nginx02
+         ip: "{{Nginx1_info.results[1].tagged_instances[0].public_dns_name}}"
+       - name: Tomcat01
+         ip: "{{Nginx1_info.results[2].tagged_instances[0].public_dns_name}}"
+       - name: Tomcat02
+         ip: "{{Nginx1_info.results[3].tagged_instances[0].public_dns_name}}"
+       - name: RMQ1
+         ip: "{{Nginx1_info.results[4].tagged_instances[0].public_dns_name}}"
+       - name: Memcache1
+         ip: "{{Nginx1_info.results[5].tagged_instances[0].public_dns_name}}"
+       - name: DB1
+         ip: "{{Nginx1_info.results[6].tagged_instances[0].public_dns_name}}"
