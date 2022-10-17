@@ -1,0 +1,5 @@
+region: us-east-1
+office_ip: 49.206.55.230/32
+sub1: subnet-0bf7fad62dce5ba0c
+sub2: subnet-0e9779af7ecc26794
+ansible_sg_id: sg-073e3e59356e35e5d
