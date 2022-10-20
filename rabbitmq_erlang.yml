@@ -1,0 +1,48 @@
+- name: Install rabbit mq with users
+  hosts: rqmservers
+  tasks:
+    - name: Install erlang
+      apt:
+        name: erlang
+        update_cache: yes
+        state: present
+    - name: install Rabbit MQ
+      apt:
+        name: rabbitmq-server
+        state: present
+        update_cache: yes
+    - name: start and enable rmq
+      service:
+        name: rabbitmq-server
+        state: started  
+        enabled: yes       
+          #- name: config setup
+          #copy:
+          #content: |
+          # [{rabbit, [{loopback_users, []}]}].
+          #dest: /etc/rabbitmq/rabbitmq-env.conf
+          #notify:
+          #- Restart RMQ
+    - rabbitmq_user:
+        user: test
+        password: test
+        vhost: /  
+        configure_priv: .*
+        read_priv: .*
+        write_priv: .*
+        tags: administrator
+        state: present
+    - name: enable rbtmq plugin
+      rabbitmq_plugin:
+        name: rabbitmq_management
+        state: enabled
+      notify:
+        - Restart RMQ
+  handlers:
+    - name: Restart RMQ
+      service:
+         name: rabbitmq-server
+         state: restarted  
+     
+           
+

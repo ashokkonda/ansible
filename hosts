@@ -1,0 +1,30 @@
+[servers]
+web1 ansible_host=10.1.10.252
+web2 ansible_host=10.1.20.121
+App1 ansible_host=10.1.10.6
+App2 ansible_host=10.1.20.40
+RQM01 ansible_host=10.1.10.138
+MC01 ansible_host=10.1.10.242
+db01 ansible_host=10.1.10.215
+
+[webservers]
+web1
+web2
+
+[appservers]
+App1
+App2
+
+[rqmservers]
+RQM01
+
+[mcservers]
+MC01
+
+[dbservers]
+db01
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=/home/ubuntu/ansible_git/ashok_key1.pem
+

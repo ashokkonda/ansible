@@ -1,0 +1,34 @@
+ - name: generate artifacts copy artifacts & sql file to files
+   hosts: localhost
+   connection: local
+   become: yes
+   tasks: 
+     - name: Install jdk git maven
+       apt:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+       loop:
+          - git
+          - openjdk-8-jdk
+          - maven
+     - name: git clone from git hub
+       git:
+        repo: 'https://github.com/devopshydclub/vprofile-repo.git'
+        dest: /etc/ansible/vprofilr_repo
+        version: vp-rem
+       register: git_status
+     - name : mev install command to build artifacts
+       command: "mvn install"
+       args:
+         chdir: /etc/ansible/vprofilr_repo
+       when: git_status.changed      
+       register: mvn_info
+     - debug:
+         msg: "{{mvn_info}}"    
+     - name: copy articats
+       command: "cp /etc/ansible/vprofilr_repo/target/vprofile-v2.war files/"
+     - name: copy sql
+       command: "cp /etc/ansible/vprofilr_repo/src/main/resources/db_backup.sql files/"    
+
+

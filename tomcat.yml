@@ -1,0 +1,47 @@
+---
+- name: Install tomcat and start
+  hosts: appservers
+  vars:
+   timestamp: "{{ansible_date_time.date}}_{{ansible_date_time.hour}}_{{ansible_date_time.minute}}" 
+  tasks:
+    - name: Install tomcat8
+      package:
+         name: "{{item}}"
+         state: latest
+         update_cache: yes
+      with_items:
+         - tomcat9
+         - tomcat9-admin
+         - tomcat9-docs
+         - tomcat9-common
+    - name: start service
+      service:
+        name: tomcat9
+        state: started
+        enabled: yes 
+    - stat:
+        path: /var/lib/tomcat9/webapps/ROOT
+      register: artifact_stat
+    - name: Artifact rool with timestamp
+      archive: 
+        path: /var/lib/tomcat9/webapps/ROOT
+        dest: "/opt/ROOT-{{timestamp}}.tgz"
+      when: artifact_stat.stat.exists
+    - name: Deploy artifact
+      copy:
+        src: /root/my-poj/files/vprofile-v2.war
+        dest: /var/lib/tomcat9/webapps/ROOT.war
+      register: deploy_info
+    - name: Deploy web config
+      template:
+       src: /etc/ansible/vprofilr_repo/src/main/resources/application.properties
+       dest: /etc/tomcat9     
+    - name: restart tomcat
+      service:
+        name: tomcat9
+        state: restarted
+      when: deploy_info.changed      
+
+
+
+

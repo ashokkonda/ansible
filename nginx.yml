@@ -1,0 +1,35 @@
+- name: setup nginx
+  hosts: webservers
+  tasks:
+    - name: install nginx
+      apt:
+       name: nginx
+       state: present
+       update_cache: yes
+    - name: start nginx
+      service:
+         name: nginx
+         state: started
+         enabled: yes
+    - name: disable default nginx
+      file:
+        path: /etc/nginx/sites-available/default
+        state: absent
+    - name: deploy web config file vproapp
+      template:
+        src: /root/my-poj/templets/nginxvpro.j2
+        dest: /etc/nginx/sites-available/vproapp
+    - name: enable vpro website
+      file:
+        src: /etc/nginx/sites-available/vproapp
+        dest: /etc/nginx/sites-enabled/vproapp
+        state: link
+      notify:
+        - Restart nginx
+  handlers:
+    - name: Restart nginx
+      service:
+         name: nginx
+         state: restarted   
+
+          

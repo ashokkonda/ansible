@@ -1,0 +1,15 @@
+- name: set host ips is /etc/hosts file
+  hosts: all
+  tasks:
+  - name: update host file
+    blockinfile:
+      path: /etc/hosts
+      block: |
+       10.1.10.252 web1
+       10.1.20.121 web2
+       10.1.10.6 App1
+       10.1.20.40 App2
+       10.1.10.138 RQM01
+       10.1.10.242 MC01
+       10.1.10.242 db01
+

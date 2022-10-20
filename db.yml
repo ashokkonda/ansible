@@ -1,0 +1,47 @@
+ - name: setup mysql with accounts and remote login from application
+   hosts: dbservers
+   vars_files:
+   - variable  
+   tasks: 
+     - name: Install mysql service and dependencies 
+       package:
+        name: "{{item}}"
+        state: present
+        update-cache: yes
+       loop:    
+        - mysql-server
+        - mysql-client
+        - python3-mysqldb
+        - libmysqlclient-dev
+     - name:
+       service:
+          name: mysql
+          state: started
+          enabled: yes
+     - name: create mysql user
+       mysql_user:
+          name: "{{dbuser}}"
+          password: "{{dbpasswd}}"
+          priv: '*.*: ALL'
+          host: '%'
+          state: present
+     - name: Creating account db
+       mysql_db:
+          name: "{{dbname}}"
+          state: present
+     - name: enable remore login to mysql server from application
+       lineinfile:
+           path: /etc/mysql/mysql.conf.d/mysqld.cnf
+           regexp: '^bind-address'
+           line: 'bind-address = 0.0.0.0'
+           backup: yes
+       notify:
+          - restart mysql
+   handlers:
+     - name: restart mysql
+       service:
+          name: mysql
+          state: restarted
+            
+
+
